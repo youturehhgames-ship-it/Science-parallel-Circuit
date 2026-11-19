@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Параллельная цепь</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
+<style>
+.reveal{font-family:Inter,system-ui,sans-serif;font-size:36px;color:#F2EFE8}
+.reveal .slides section{text-align:left;display:flex;flex-direction:column;gap:36px;padding:0 60px}
+.reveal .light{color:#14181F}
+.reveal h1{font-size:120px;font-weight:800;line-height:1.05;margin:0;color:inherit;text-transform:none}
+.reveal h2{font-size:68px;font-weight:800;line-height:1.1;margin:0;color:inherit;text-transform:none}
+.reveal h3{font-size:38px;font-weight:600;margin:0 0 14px;color:inherit;text-transform:none}
+.reveal p,.reveal li,.reveal td,.reveal th{font-size:34px;line-height:1.35;margin:0}
+.sub{font-size:42px!important;color:#F5A623}
+.row{display:flex;gap:28px}
+.card{flex:1;background:#232A35;border-radius:24px;padding:36px}
+.light .card{background:#E3DDD0}
+.card p{font-size:30px!important}
+.big{font-size:52px;font-weight:800;color:#F5A623;margin-bottom:14px}
+.light .big{color:#B36B00}
+.plus{border-left:16px solid #FF6B5E}
+.minus{border-left:16px solid #4DA3FF}
+.reveal ol{margin:0;padding-left:48px;display:flex;flex-direction:column;gap:18px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;color:#F5A623;font-weight:600;padding:18px 22px;border-bottom:3px solid #F5A623}
+td{padding:18px 22px;border-bottom:1px solid #3A4352}
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section data-background-color="#14181F" style="justify-content:center"><h1>Параллельная цепь</h1><p class="sub">Как устроена, как работает, чем отличается от последовательной и как подключать + и −</p></section>
+
+<section data-background-color="#14181F"><h2>Что такое параллельная цепь</h2><p>Элементы соединены так, что у тока есть несколько путей: каждый элемент подключён напрямую к источнику.</p><div class="row"><div class="card"><h3>Общие узлы</h3><p>Все «плюсы» сходятся в одну точку, все «минусы» в другую</p></div><div class="card"><h3>Одно напряжение</h3><p>Каждый элемент получает полное напряжение источника</p></div><div class="card"><h3>Токи складываются</h3><p>Источник отдаёт сумму токов всех веток</p></div></div></section>
+
+<section class="light" data-background-color="#F2EFE8"><h2>Как она работает</h2><div class="row"><div class="card"><div class="big">U = U₁ = U₂</div><p>Напряжение на всех ветках одинаковое</p></div><div class="card"><div class="big">I = I₁ + I₂</div><p>Общий ток равен сумме токов веток</p></div><div class="card"><div class="big">1/R = 1/R₁ + 1/R₂</div><p>Общее сопротивление меньше самого малого</p></div></div><p>Перегорела одна лампа: остальные продолжают гореть, потому что у тока остаются другие пути.</p></section>
+
+<section data-background-color="#14181F"><h2>Параллельная и последовательная</h2><table><tr><th></th><th>Последовательная</th><th>Параллельная</th></tr><tr><td>Путей для тока</td><td>Один</td><td>Несколько</td></tr><tr><td>Напряжение</td><td>Делится между элементами</td><td>Одинаковое на всех</td></tr><tr><td>Ток</td><td>Одинаковый везде</td><td>Складывается из веток</td></tr><tr><td>Общее сопротивление</td><td>R₁ + R₂</td><td>Меньше самого малого</td></tr><tr><td>Один элемент вышел из строя</td><td>Вся цепь отключается</td><td>Остальные работают</td></tr></table></section>
+
+<section class="light" data-background-color="#F2EFE8"><h2>Как собрать</h2><ol><li>Возьми источник питания и два провода: красный и чёрный</li><li>Сделай две шины: плюсовую и минусовую (на макетной плате это боковые рельсы)</li><li>Каждый элемент подключи между шинами: плюс к плюсовой, минус к минусовой</li><li>Каждому светодиоду поставь свой резистор последовательно</li><li>При желании добавь выключатель на каждую ветку</li><li>Проверь, что плюс нигде не касается минуса, и включай</li></ol></section>
+
+<section data-background-color="#14181F"><h2>Почему важна полярность</h2><div class="row"><div class="card"><h3>Светодиод</h3><p>При обратном включении не светит, а при высоком напряжении выходит из строя</p></div><div class="card"><h3>Электролитический конденсатор</h3><p>Обратная полярность может привести к нагреву и повреждению корпуса</p></div></div><div class="row"><div class="card"><h3>Мотор</h3><p>Крутится в обратную сторону</p></div><div class="card"><h3>Плата, Arduino</h3><p>Неверный плюс и минус может её сжечь</p></div></div><p>Резисторам и обычным лампам накаливания полярность не важна.</p></section>
+
+<section class="light" data-background-color="#F2EFE8"><h2>Как подключать + и −</h2><div class="row"><div class="card plus"><h3>Плюс (красный)</h3><p>Плюс источника → плюсовая шина → плюс каждого элемента</p></div><div class="card minus"><h3>Минус (чёрный)</h3><p>Минус источника → минусовая шина → минус каждого элемента</p></div></div><p>Светодиод: длинная ножка это плюс, короткая (у плоского среза корпуса) это минус.</p><p>Красный и чёрный цвета проводов нужны, чтобы не перепутать полюса при сборке.</p></section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script>Reveal.initialize({width:1920,height:1080,margin:0.04,hash:true,controls:true,progress:true,transition:'fade'});</script>
+</body>
+</html>

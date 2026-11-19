@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parallel Circuit: play with it</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;600;800&family=Noto+Sans+Thai:wght@400;600;800&family=Noto+Sans+Devanagari:wght@400;600;800&family=Noto+Sans+Arabic:wght@400;600;800&family=Press+Start+2P&display=swap">
+<style>
+*{box-sizing:border-box}
+:root{--bg:#14181F;--card:#232A35;--ink:#F2EFE8;--amb:#F5A623;--red:#FF6B5E;--blue:#4DA3FF;--grn:#3CFF8A}
+html{-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Inter,"Noto Sans TC","Noto Sans Thai","Noto Sans Devanagari","Noto Sans Arabic",system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+section{padding:clamp(48px,8vw,100px) clamp(18px,5vw,60px);max-width:1100px;margin:0 auto;opacity:0;transform:translateY(36px)}
+section.in{opacity:1;transform:none}
+/* pixel / Minecraft look */
+section{transition:opacity .9s cubic-bezier(.22,1,.36,1),transform 1.1s cubic-bezier(.22,1,.36,1)}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:9999;pointer-events:none;image-rendering:pixelated}
+@keyframes pxin{0%{opacity:0;transform:translateY(24px)}50%{opacity:1}100%{opacity:1;transform:none}}
+html:not(.pxwait) .hero>:not(h1){animation:pxin 1s cubic-bezier(.22,1,.36,1) both}
+html:not(.pxwait) .hero>:nth-child(3){animation-delay:1.1s}
+svg.off .flow{animation-play-state:paused}
+.hero h1{text-shadow:.055em .055em 0 rgba(0,0,0,.5)}
+.hero h1 .amb{text-shadow:.055em .055em 0 #7a3a05}
+.card b{text-shadow:3px 3px 0 rgba(122,58,5,.6)}
+@media(prefers-reduced-motion:reduce){html:not(.pxwait) .hero>*{animation:none}section{transition:none}}
+h1{font-size:clamp(42px,9vw,104px);font-weight:800;line-height:1.02;margin:0 0 18px}
+h2{font-size:clamp(28px,5vw,52px);font-weight:800;margin:0 0 10px}
+h3{font-size:20px;margin:0 0 8px}
+p{font-size:clamp(16px,2vw,20px);line-height:1.5;margin:0 0 14px;color:#cfcabf}
+.amb{color:var(--amb)}
+.hero{min-height:92vh;min-height:92svh;display:flex;flex-direction:column;justify-content:center}
+.hero .tag{color:var(--amb);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:14px;margin-bottom:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:20px}
+.card{background:var(--card);border-radius:20px;padding:22px}
+.card b{display:block;color:var(--amb);font-size:34px;margin-bottom:6px}
+.panel{background:var(--card);border-radius:24px;padding:clamp(14px,3vw,28px);margin-top:20px}
+svg{direction:ltr;width:100%;height:auto;display:block;touch-action:manipulation}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+button{font:600 16px Inter,sans-serif;border:0;border-radius:999px;padding:12px 20px;background:#323b4b;color:var(--ink);cursor:pointer}
+button.on{background:var(--amb);color:#14181F}
+button:active{transform:scale(.97)}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--amb);height:28px}
+input[type=number]{width:100px;font:600 18px Inter,sans-serif;background:#14181F;color:var(--ink);border:2px solid #3a4352;border-radius:12px;padding:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.stat{background:#1b212b;border-radius:14px;padding:12px;text-align:center}
+.stat b{display:block;font-size:clamp(20px,4vw,32px);color:var(--amb)}
+.stat span{font-size:13px;color:#9aa4b5}
+.say{background:#1b212b;border-inline-start:6px solid var(--amb);border-radius:12px;padding:14px 16px;font-size:clamp(15px,2vw,19px);line-height:1.45;min-height:3.6em}
+.say.bad{border-color:var(--red)}.say.good{border-color:var(--grn)}
+.flow{fill:none;stroke:#FFD23F;stroke-width:7;stroke-linecap:round;stroke-dasharray:.1 16;animation:fl linear infinite}
+@keyframes fl{to{stroke-dashoffset:-16.1}}
+.wire{fill:none;stroke:#566175;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+svg text{font-family:Inter,sans-serif}
+.bars div{height:30px;border-radius:8px;margin:8px 0;display:flex;align-items:center;padding-inline-start:12px;font-weight:600;color:#14181F;transition:width .3s;white-space:nowrap}
+.steps{list-style:none;padding:0;margin:16px 0;display:grid;gap:10px}
+.steps button{width:100%;text-align:start;border-radius:16px;padding:16px 18px;display:flex;gap:14px;align-items:center;font-weight:400;font-size:clamp(15px,2vw,19px)}
+.steps button i{flex:none;width:30px;height:30px;border-radius:50%;border:3px solid #566175;display:grid;place-items:center;font-style:normal;font-weight:800}
+.steps button.done{background:#1f3a2c}.steps button.done i{background:var(--grn);border-color:var(--grn);color:#14181F}
+.prog{height:12px;background:#1b212b;border-radius:99px;overflow:hidden}.prog div{height:100%;width:0;background:var(--grn);transition:width .4s}
+#lg{position:fixed;top:max(10px,env(safe-area-inset-top));inset-inline-end:10px;z-index:10;background:#F5A623;color:#14181F;border:0;border-radius:999px;padding:10px 14px;font:600 15px Inter,sans-serif}
+.tm{text-align:center}.av{width:72px;height:72px;border-radius:50%;background:#323b4b;margin:0 auto 12px;display:grid;place-items:center;font-size:32px;font-weight:800;color:var(--amb)}.lead .av{background:var(--amb);color:#14181F}.tm small{display:block;color:#9aa4b5;margin-bottom:4px;font-size:14px}.nm{font-size:22px;font-weight:800}
+@media(max-width:600px){.stats{gap:6px}.stat{padding:8px 4px}}
+/* letters fall from above, slightly tilted, and land upright */
+.w{display:inline-block;white-space:nowrap}
+.lt{display:inline-block;opacity:0}
+@keyframes drop{
+  0%{opacity:0;transform:translateY(calc(var(--h) * -1)) rotate(var(--r));animation-timing-function:cubic-bezier(.55,0,.9,.5)}
+  12%{opacity:1}
+  68%{opacity:1;transform:translateY(0) rotate(0deg);animation-timing-function:cubic-bezier(.2,.7,.3,1)}
+  84%{opacity:1;transform:translateY(-.1em) rotate(0deg)}
+  100%{opacity:1;transform:none}
+}
+section.in .lt{animation:drop .8s both;animation-delay:calc(var(--i) * var(--st,42ms) + 150ms)}
+/* 3D model viewer */
+.spin{position:relative;direction:ltr;aspect-ratio:4/3;max-height:80vh;width:100%;background:#1b212b;border-radius:6px;overflow:hidden;box-shadow:0 0 0 4px var(--amb),6px 6px 0 4px #7a3a05}
+.spin canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.spin canvas:active{cursor:grabbing}
+</style>
+</head>
+<body>
+<canvas id="fx" style="display:none"></canvas>
+<script>
+/* pixel particles: yellow-orange squares pop up and fall when you press interactive controls */
+(function(){
+var c=document.getElementById("fx");if(!c)return;
+if(window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches){c.remove();return}
+var x=c.getContext("2d"),P=["#FFF1A8","#FFD23F","#FFD23F","#F5A623","#F5A623","#FF8C1A","#E8590C"],parts=[],run=false,last=0,lastSlide=0;
+function size(){c.width=innerWidth;c.height=innerHeight}
+size();addEventListener("resize",size);
+function spawn(px,py,n,spread){
+  for(var i=0;i<n;i++)parts.push({x:px,y:py,vx:(Math.random()-.5)*(spread||6),vy:-Math.random()*4-1.5,s:[4,6,8][Math.random()*3|0],c:P[Math.random()*P.length|0],l:1});
+  if(!run){run=true;c.style.display="block";last=performance.now();requestAnimationFrame(loop)}
+}
+function loop(now){
+  var dt=Math.min(40,now-last)/16.7;last=now;
+  x.clearRect(0,0,c.width,c.height);
+  for(var i=parts.length-1;i>=0;i--){
+    var p=parts[i];
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=.28*dt;p.l-=.012*dt;
+    if(p.l<=0||p.y>c.height+20){parts.splice(i,1);continue}
+    if(p.l<.3&&Math.floor(p.l*30)%2)continue;
+    x.fillStyle=p.c;x.fillRect(p.x|0,p.y|0,p.s,p.s);
+    x.fillStyle="rgba(0,0,0,.25)";x.fillRect(p.x|0,(p.y|0)+p.s-2,p.s,2);
+  }
+  if(parts.length)requestAnimationFrame(loop);else{run=false;x.clearRect(0,0,c.width,c.height);c.style.display="none"}
+}
+document.addEventListener("pointerdown",function(e){
+  var t=e.target.closest&&e.target.closest("button,g[data-i]");
+  if(t)spawn(e.clientX,e.clientY,16,7);
+},true);
+document.addEventListener("input",function(e){
+  var t=e.target;if(!t||t.type!=="range")return;
+  var n=performance.now();if(n-lastSlide<60)return;lastSlide=n;
+  var r=t.getBoundingClientRect(),f=(t.value-t.min)/(t.max-t.min);
+  spawn(r.left+12+f*(r.width-24),r.top+r.height/2,4,3);
+});
+})();
+</script>
+<select id="lg" aria-label="Language"><option value="en">English</option><option value="ru">Русский</option><option value="zh">繁體中文</option><option value="tr">Türkçe</option><option value="th">ไทย</option><option value="fil">Filipino</option><option value="hi">हिन्दी</option><option value="ur">اردو</option></select>
+
+<section class="hero in"><div class="tag" data-t="tag"></div><h1><span data-t="h1a"></span> <span class="amb" data-t="h1b"></span></h1><p data-t="hero"></p></section>
+
+<section><h2 data-t="idea"></h2><div class="cards">
+<div class="card"><b>1 → N</b><h3 data-t="c1t"></h3><p data-t="c1p"></p></div>
+<div class="card"><b>V = V</b><h3 data-t="c2t"></h3><p data-t="c2p"></p></div>
+<div class="card"><b>I₁ + I₂</b><h3 data-t="c3t"></h3><p data-t="c3p"></p></div></div></section>
+
+<section><h2 data-t="lab"></h2><p data-t="labp"></p>
+<div class="panel"><div class="bar"><button id="mP" class="on" data-t="par"></button><button id="mS" data-t="ser"></button>
+<input id="volt" type="range" min="3" max="12" step="0.5" value="6"><b id="vl" class="amb">6 V</b></div>
+<svg id="c1" viewBox="0 0 600 330"></svg>
+<div class="stats"><div class="stat"><b id="sV">-</b><span data-t="vb"></span></div><div class="stat"><b id="sI">-</b><span data-t="cur"></span></div><div class="stat"><b id="sR">-</b><span data-t="rt"></span></div></div>
+<div id="say1" class="say"></div></div></section>
+
+<section><h2 data-t="pol"></h2><p data-t="polp"></p>
+<div class="panel"><div class="bar"><button id="pF" data-t="flip"></button><button id="pR" class="on"></button><button id="pX" data-t="reset"></button></div>
+<svg id="c2" viewBox="0 0 620 300"></svg><div id="say2" class="say"></div></div></section>
+
+<section><h2 data-t="calc"></h2>
+<div class="panel"><div class="bar"><label>R₁ <input id="r1" type="number" min="1" value="30"> Ω</label><label>R₂ <input id="r2" type="number" min="1" value="60"> Ω</label></div>
+<div class="bars" id="bars"></div><div id="say3" class="say"></div></div>
+<div class="cards"><div class="card"><h3 data-t="ser"></h3><p>R = R₁ + R₂</p></div><div class="card"><h3 data-t="par"></h3><p>1/R = 1/R₁ + 1/R₂</p></div></div></section>
+
+<section><h2 data-t="spinT"></h2><p data-t="spinP"></p>
+<div class="panel"><div id="spin" class="spin"><canvas id="gl"></canvas></div>
+<div class="bar" style="margin:20px 0 0"><button id="spL" class="on"></button><button id="spA" class="on" data-t="auto"></button><button id="spR" data-t="reset"></button></div></div></section>
+
+<section><h2 data-t="team"></h2><div class="cards">
+<div class="card tm lead"><div class="av">M</div><small data-t="leader"></small><span class="nm">Michael Bogomolov</span></div>
+<div class="card tm"><div class="av">S</div><small data-t="members"></small><span class="nm">Sameer Saher</span></div>
+<div class="card tm"><div class="av">J</div><small data-t="members"></small><span class="nm">Jerry zunt</span></div></div></section>
+
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)},lang="en";
+var L={
+en:{tag:"Electronics, hands-on",h1a:"Parallel",h1b:"circuit",hero:"A circuit you can break, flip and measure. Scroll down and start touching things.",idea:"The idea in 3 cards",c1t:"Many paths",c1p:"Each component connects straight to the battery on its own branch.",c2t:"Same voltage",c2p:"Every branch gets the full battery voltage.",c3t:"Currents add up",c3p:"The battery supplies the sum of all branch currents.",lab:"Build it, then break it",labp:"Switch parallel or series, drag the voltage, tap a bulb to remove it. Bulbs are rated 6 V.",par:"Parallel",ser:"Series",vb:"voltage on a bulb",cur:"current from battery",rt:"total resistance",open:"open",rem:"removed",m_none:"All branches are open: no path, no current.",m_out:"A bulb is out but the others did not change. Each branch is its own path, which is why home sockets are wired in parallel.",m_all:"Every bulb gets the full {0} V, so all glow the same. Tap a bulb to remove it.",m_sbreak:"A bulb is missing, so the only path is broken and everything goes dark.",m_sdim:"The {0} V is shared between the bulbs ({1} V), so they glow dim. Try 12 V.",pol:"Why plus and minus matter",polp:"Flip the battery, then take the resistor out.",flip:"Flip battery",resOn:"Resistor: ON",resOff:"Resistor: OFF",reset:"Reset",resistor:"resistor",anode:"anode (+)",cathode:"cathode (−)",p_ok:"Works: current enters the long leg (+), leaves the short leg (−), and the resistor keeps it safe.",p_burn:"Burned out: nothing limits the current. Always use a resistor with an LED.",p_rev:"Reversed: the LED blocks the current and stays dark. At higher voltage it can be damaged.",calc:"Resistance calculator",calcsay:"Parallel ({0} Ω) is lower than both resistors: more paths, less resistance.",build:"Build checklist",buildp:"Tap each step as you do it.",s1:"Take a power source and two wires: red and black",s2:"Make two rails: positive and negative",s3:"Connect each component between the rails: plus to plus, minus to minus",s4:"Give each LED its own resistor in series",s5:"Optional: add a switch to each branch",s6:"Check that plus never touches minus, then power on",done:"Done. You can power it on.",team:"Our team",leader:"Group leader",members:"Team members",spinT:"Our model in 3D",spinP:"Drag to spin it, scroll or pinch to zoom, and flip the switch to light the bulbs.",modOn:"Power: ON",modOff:"Power: OFF",auto:"Auto-rotate"},
+ru:{tag:"Электроника на практике",h1a:"Параллельная",h1b:"цепь",hero:"Цепь, которую можно ломать, переворачивать и измерять. Листай вниз и трогай всё.",idea:"Идея в трёх карточках",c1t:"Много путей",c1p:"Каждый элемент подключён прямо к батарее на своей ветке.",c2t:"Одно напряжение",c2p:"Каждая ветка получает полное напряжение батареи.",c3t:"Токи складываются",c3p:"Батарея отдаёт сумму токов всех веток.",lab:"Собери и сломай",labp:"Переключай параллельную и последовательную, двигай напряжение, нажми на лампу, чтобы убрать её. Лампы рассчитаны на 6 В.",par:"Параллельная",ser:"Последовательная",vb:"напряжение на лампе",cur:"ток от батареи",rt:"общее сопротивление",open:"обрыв",rem:"убрана",m_none:"Все ветки разомкнуты: пути нет, тока нет.",m_out:"Одна лампа выключена, а остальные не изменились. У каждой ветки свой путь, поэтому розетки дома подключены параллельно.",m_all:"Каждая лампа получает полные {0} В, поэтому все светят одинаково. Нажми на лампу, чтобы убрать её.",m_sbreak:"Лампы нет, единственный путь разорван и всё погасло.",m_sdim:"Напряжение {0} В делится между лампами ({1} В), поэтому они горят тускло. Попробуй 12 В.",pol:"Почему важны плюс и минус",polp:"Переверни батарею, потом убери резистор.",flip:"Перевернуть батарею",resOn:"Резистор: ВКЛ",resOff:"Резистор: ВЫКЛ",reset:"Сброс",resistor:"резистор",anode:"анод (+)",cathode:"катод (−)",p_ok:"Работает: ток входит в длинную ножку (+), выходит из короткой (−), а резистор держит его в безопасных пределах.",p_burn:"Сгорел: ничто не ограничивает ток. Со светодиодом всегда нужен резистор.",p_rev:"Наоборот: светодиод не пропускает ток и не светит. При большем напряжении его можно повредить.",calc:"Калькулятор сопротивления",calcsay:"Параллельное ({0} Ом) меньше обоих резисторов: больше путей, меньше сопротивление.",build:"Чек-лист сборки",buildp:"Отмечай каждый шаг, когда сделаешь.",s1:"Возьми источник питания и два провода: красный и чёрный",s2:"Сделай две шины: плюсовую и минусовую",s3:"Подключи каждый элемент между шинами: плюс к плюсу, минус к минусу",s4:"Каждому светодиоду поставь свой резистор последовательно",s5:"По желанию добавь выключатель на каждую ветку",s6:"Проверь, что плюс нигде не касается минуса, и включай",done:"Готово. Можно включать.",team:"Наша команда",leader:"Руководитель группы",members:"Участники",spinT:"Наша модель в 3D",spinP:"Тяни, чтобы вращать, колёсико или щипок — приблизить. Включи питание, чтобы зажечь лампочки.",modOn:"Питание: ВКЛ",modOff:"Питание: ВЫКЛ",auto:"Авто-вращение"},
+zh:{tag:"電子學實作",h1a:"並聯",h1b:"電路",hero:"一個可以拆、可以翻、可以測量的電路。往下捲動，動手試試。",idea:"三張卡片看懂概念",c1t:"多條路徑",c1p:"每個元件各自在一條支路上直接連到電池。",c2t:"電壓相同",c2p:"每條支路都得到電池的完整電壓。",c3t:"電流相加",c3p:"電池供應所有支路電流的總和。",lab:"先組裝，再弄壞",labp:"切換並聯或串聯，拖曳電壓，點燈泡即可移除。燈泡額定 6 V。",par:"並聯",ser:"串聯",vb:"燈泡電壓",cur:"電池輸出電流",rt:"總電阻",open:"斷路",rem:"已移除",m_none:"所有支路都斷開：沒有路徑，沒有電流。",m_out:"一顆燈泡熄滅了，其他燈泡完全不受影響。每條支路都有自己的路徑，這就是家中插座採用並聯的原因。",m_all:"每顆燈泡都得到完整的 {0} V，所以亮度相同。點燈泡可移除它。",m_sbreak:"少了一顆燈泡，唯一的路徑斷了，全部熄滅。",m_sdim:"{0} V 由燈泡分攤（{1} V），所以都很暗。試試 12 V。",pol:"為什麼正負極很重要",polp:"翻轉電池，然後把電阻拿掉。",flip:"翻轉電池",resOn:"電阻：開",resOff:"電阻：關",reset:"重設",resistor:"電阻",anode:"陽極 (+)",cathode:"陰極 (−)",p_ok:"正常：電流從長腳 (+) 進入，從短腳 (−) 流出，電阻讓電流保持安全。",p_burn:"燒壞了：沒有任何東西限制電流。LED 一定要搭配電阻。",p_rev:"接反了：LED 擋住電流，不會亮。電壓較高時還可能損壞。",calc:"電阻計算器",calcsay:"並聯 ({0} Ω) 比兩個電阻都小：路徑越多，電阻越小。",build:"組裝清單",buildp:"完成每一步就點一下。",s1:"準備電源和兩條導線：紅色和黑色",s2:"做出正負兩條匯流排",s3:"把每個元件接在兩條匯流排之間：正接正，負接負",s4:"每顆 LED 各自串聯一個電阻",s5:"可選：在每條支路加一個開關",s6:"確認正極沒有碰到負極，再通電",done:"完成，可以通電了。",team:"我們的團隊",leader:"組長",members:"組員",spinT:"我們的 3D 模型",spinP:"拖動旋轉，滾輪或雙指縮放。打開電源讓燈泡亮起來。",modOn:"電源：開",modOff:"電源：關",auto:"自動旋轉"},
+tr:{tag:"Elektronik, uygulamalı",h1a:"Paralel",h1b:"devre",hero:"Bozabileceğin, ters çevirebileceğin ve ölçebileceğin bir devre. Aşağı kaydır ve dokunmaya başla.",idea:"Fikir 3 kartta",c1t:"Çok yol",c1p:"Her eleman kendi kolunda doğrudan pile bağlıdır.",c2t:"Aynı gerilim",c2p:"Her kol pilin tüm gerilimini alır.",c3t:"Akımlar toplanır",c3p:"Pil, tüm kolların akımlarının toplamını sağlar.",lab:"Kur, sonra boz",labp:"Paralel ve seri arasında geçiş yap, gerilimi sürükle, kaldırmak için ampule dokun. Ampuller 6 V içindir.",par:"Paralel",ser:"Seri",vb:"ampul gerilimi",cur:"pilden çekilen akım",rt:"toplam direnç",open:"açık",rem:"çıkarıldı",m_none:"Tüm kollar açık: yol yok, akım yok.",m_out:"Bir ampul söndü ama diğerleri değişmedi. Her kolun kendi yolu var, evdeki prizlerin paralel bağlanmasının nedeni budur.",m_all:"Her ampul tam {0} V alır, bu yüzden hepsi aynı parlar. Kaldırmak için ampule dokun.",m_sbreak:"Bir ampul eksik, tek yol kesildi ve her şey karardı.",m_sdim:"{0} V ampuller arasında paylaşılır ({1} V), bu yüzden sönük yanarlar. 12 V dene.",pol:"Artı ve eksi neden önemli",polp:"Pili ters çevir, sonra direnci çıkar.",flip:"Pili ters çevir",resOn:"Direnç: AÇIK",resOff:"Direnç: KAPALI",reset:"Sıfırla",resistor:"direnç",anode:"anot (+)",cathode:"katot (−)",p_ok:"Çalışır: akım uzun bacaktan (+) girer, kısa bacaktan (−) çıkar, direnç de onu güvenli tutar.",p_burn:"Yandı: akımı hiçbir şey sınırlamıyor. LED ile her zaman direnç kullan.",p_rev:"Ters: LED akımı engeller ve yanmaz. Yüksek gerilimde zarar görebilir.",calc:"Direnç hesaplayıcı",calcsay:"Paralel ({0} Ω) iki dirençten de küçüktür: daha çok yol, daha az direnç.",build:"Kurulum listesi",buildp:"Her adımı yaptıkça dokun.",s1:"Bir güç kaynağı ve iki kablo al: kırmızı ve siyah",s2:"İki ray yap: artı ve eksi",s3:"Her elemanı raylar arasına bağla: artıyı artıya, eksiyi eksiye",s4:"Her LED'e seri olarak kendi direncini ver",s5:"İsteğe bağlı: her kola bir anahtar ekle",s6:"Artının eksiye hiçbir yerde değmediğini kontrol et, sonra çalıştır",done:"Tamam. Çalıştırabilirsin.",team:"Ekibimiz",leader:"Grup lideri",members:"Ekip üyeleri",spinT:"3D modelimiz",spinP:"Döndürmek için sürükle, yakınlaştırmak için kaydır veya parmaklarınla aç-kapa. Ampulleri yakmak için güç düğmesine bas.",modOn:"Güç: AÇIK",modOff:"Güç: KAPALI",auto:"Otomatik döndür"},
+th:{tag:"อิเล็กทรอนิกส์ แบบลงมือทำ",h1a:"วงจร",h1b:"ขนาน",hero:"วงจรที่คุณทำพัง พลิกกลับ และวัดค่าได้ เลื่อนลงแล้วลองจับดูเลย",idea:"แนวคิดใน 3 การ์ด",c1t:"หลายเส้นทาง",c1p:"อุปกรณ์แต่ละตัวต่อตรงกับแบตเตอรี่บนแขนงของตัวเอง",c2t:"แรงดันเท่ากัน",c2p:"ทุกแขนงได้รับแรงดันเต็มของแบตเตอรี่",c3t:"กระแสรวมกัน",c3p:"แบตเตอรี่จ่ายกระแสเท่ากับผลรวมของทุกแขนง",lab:"ต่อให้เสร็จ แล้วลองทำให้พัง",labp:"สลับระหว่างขนานกับอนุกรม ลากปรับแรงดัน แตะหลอดไฟเพื่อถอดออก หลอดไฟรับได้ 6 V",par:"ขนาน",ser:"อนุกรม",vb:"แรงดันที่หลอดไฟ",cur:"กระแสจากแบตเตอรี่",rt:"ความต้านทานรวม",open:"ขาดวงจร",rem:"ถอดออก",m_none:"ทุกแขนงเปิดอยู่ จึงไม่มีเส้นทางและไม่มีกระแส",m_out:"หลอดหนึ่งดับ แต่หลอดอื่นไม่เปลี่ยนเลย แต่ละแขนงมีเส้นทางของตัวเอง นี่คือเหตุผลที่ปลั๊กในบ้านต่อแบบขนาน",m_all:"ทุกหลอดได้รับ {0} V เต็ม จึงสว่างเท่ากัน แตะหลอดเพื่อถอดออก",m_sbreak:"ขาดหลอดไปหนึ่งดวง เส้นทางเดียวจึงขาด และทุกอย่างดับหมด",m_sdim:"แรงดัน {0} V ถูกแบ่งให้แต่ละหลอด ({1} V) จึงสว่างน้อย ลอง 12 V ดู",pol:"ทำไมขั้วบวกและลบจึงสำคัญ",polp:"พลิกแบตเตอรี่ แล้วลองถอดตัวต้านทานออก",flip:"พลิกแบตเตอรี่",resOn:"ตัวต้านทาน: เปิด",resOff:"ตัวต้านทาน: ปิด",reset:"รีเซ็ต",resistor:"ตัวต้านทาน",anode:"ขั้วแอโนด (+)",cathode:"ขั้วแคโทด (−)",p_ok:"ทำงานได้: กระแสเข้าขายาว (+) ออกขาสั้น (−) และตัวต้านทานช่วยให้ปลอดภัย",p_burn:"ไหม้แล้ว: ไม่มีอะไรจำกัดกระแส ใช้ LED ต้องมีตัวต้านทานเสมอ",p_rev:"กลับขั้ว: LED กันกระแสไว้และไม่สว่าง ถ้าแรงดันสูงอาจเสียหายได้",calc:"เครื่องคิดเลขความต้านทาน",calcsay:"แบบขนาน ({0} Ω) ต่ำกว่าตัวต้านทานทั้งสองตัว เพราะเส้นทางมากขึ้น ความต้านทานจึงน้อยลง",build:"เช็กลิสต์การต่อวงจร",buildp:"แตะแต่ละขั้นตอนเมื่อทำเสร็จ",s1:"เตรียมแหล่งจ่ายไฟและสายไฟสองเส้น: สีแดงและสีดำ",s2:"ทำรางสองราง: รางบวกและรางลบ",s3:"ต่ออุปกรณ์แต่ละตัวระหว่างราง: บวกเข้าบวก ลบเข้าลบ",s4:"ต่อตัวต้านทานอนุกรมให้ LED แต่ละดวง",s5:"ทางเลือก: เพิ่มสวิตช์ให้แต่ละแขนง",s6:"ตรวจว่าขั้วบวกไม่แตะขั้วลบเลย แล้วจึงเปิดไฟ",done:"เสร็จแล้ว เปิดไฟได้เลย",team:"ทีมของเรา",leader:"หัวหน้ากลุ่ม",members:"สมาชิกในทีม",spinT:"โมเดล 3 มิติของเรา",spinP:"ลากเพื่อหมุน เลื่อนล้อเมาส์หรือใช้สองนิ้วเพื่อซูม แล้วเปิดสวิตช์ให้หลอดไฟสว่าง",modOn:"ไฟ: เปิด",modOff:"ไฟ: ปิด",auto:"หมุนอัตโนมัติ"},
+fil:{tag:"Electronics, hands-on",h1a:"Parallel",h1b:"circuit",hero:"Isang circuit na puwede mong sirain, baliktarin at sukatin. Mag-scroll pababa at simulan mo nang hawakan.",idea:"Ang ideya sa 3 card",c1t:"Maraming daan",c1p:"Bawat bahagi ay direktang nakakabit sa baterya sa sarili nitong sanga.",c2t:"Parehong boltahe",c2p:"Bawat sanga ay nakakakuha ng buong boltahe ng baterya.",c3t:"Nagdadagdagan ang kuryente",c3p:"Ang baterya ang nagbibigay ng kabuuan ng kuryente ng lahat ng sanga.",lab:"Buuin, tapos sirain",labp:"Magpalit sa parallel o series, i-drag ang boltahe, i-tap ang bumbilya para alisin. 6 V ang rating ng mga bumbilya.",par:"Parallel",ser:"Series",vb:"boltahe sa bumbilya",cur:"kuryente mula sa baterya",rt:"kabuuang resistance",open:"putol",rem:"inalis",m_none:"Bukas ang lahat ng sanga: walang daan, walang kuryente.",m_out:"Patay ang isang bumbilya pero walang nagbago sa iba. May sariling daan ang bawat sanga, kaya parallel ang mga saksakan sa bahay.",m_all:"Bawat bumbilya ay nakakakuha ng buong {0} V, kaya pare-pareho ang liwanag. I-tap ang bumbilya para alisin.",m_sbreak:"May nawawalang bumbilya, kaya putol ang nag-iisang daan at dumilim ang lahat.",m_sdim:"Hinahati sa mga bumbilya ang {0} V ({1} V), kaya malabo ang ilaw. Subukan ang 12 V.",pol:"Bakit mahalaga ang plus at minus",polp:"Baliktarin ang baterya, tapos tanggalin ang resistor.",flip:"Baliktarin ang baterya",resOn:"Resistor: ON",resOff:"Resistor: OFF",reset:"I-reset",resistor:"resistor",anode:"anode (+)",cathode:"cathode (−)",p_ok:"Gumagana: pumapasok ang kuryente sa mahabang binti (+), lumalabas sa maikling binti (−), at pinapanatili itong ligtas ng resistor.",p_burn:"Nasunog: walang naglilimita sa kuryente. Laging gumamit ng resistor sa LED.",p_rev:"Baligtad: hinaharangan ng LED ang kuryente at hindi sumisindi. Sa mas mataas na boltahe, puwede itong masira.",calc:"Resistance calculator",calcsay:"Mas mababa ang parallel ({0} Ω) kaysa sa dalawang resistor: mas maraming daan, mas mababang resistance.",build:"Checklist sa pagbuo",buildp:"I-tap ang bawat hakbang kapag natapos mo.",s1:"Kumuha ng power source at dalawang wire: pula at itim",s2:"Gumawa ng dalawang riles: positibo at negatibo",s3:"Ikabit ang bawat bahagi sa pagitan ng mga riles: plus sa plus, minus sa minus",s4:"Bigyan ang bawat LED ng sarili nitong resistor na naka-series",s5:"Opsyonal: magdagdag ng switch sa bawat sanga",s6:"Siguraduhing hindi dumidikit ang plus sa minus, saka buksan",done:"Tapos na. Puwede mo nang buksan.",team:"Ang aming koponan",leader:"Group leader",members:"Mga miyembro ng koponan",spinT:"Ang aming 3D na modelo",spinP:"I-drag para paikutin, mag-scroll o mag-pinch para mag-zoom, at i-on ang switch para umilaw ang mga bombilya.",modOn:"Power: ON",modOff:"Power: OFF",auto:"Auto-ikot"},
+hi:{tag:"इलेक्ट्रॉनिक्स, करके सीखें",h1a:"समानांतर",h1b:"परिपथ",hero:"एक ऐसा परिपथ जिसे आप तोड़ सकते हैं, पलट सकते हैं और नाप सकते हैं। नीचे स्क्रॉल करें और छूकर देखें।",idea:"3 कार्ड में विचार",c1t:"कई रास्ते",c1p:"हर अवयव अपनी शाखा में सीधे बैटरी से जुड़ा होता है।",c2t:"समान वोल्टेज",c2p:"हर शाखा को बैटरी का पूरा वोल्टेज मिलता है।",c3t:"धाराएँ जुड़ती हैं",c3p:"बैटरी सभी शाखाओं की धाराओं का योग देती है।",lab:"बनाइए, फिर तोड़िए",labp:"समानांतर और श्रेणी के बीच बदलें, वोल्टेज खींचें, बल्ब हटाने के लिए उसे टैप करें। बल्ब 6 V के हैं।",par:"समानांतर",ser:"श्रेणी",vb:"बल्ब पर वोल्टेज",cur:"बैटरी से धारा",rt:"कुल प्रतिरोध",open:"खुला",rem:"हटाया गया",m_none:"सभी शाखाएँ खुली हैं: कोई रास्ता नहीं, कोई धारा नहीं।",m_out:"एक बल्ब बुझा है, पर बाकी वैसे ही हैं। हर शाखा का अपना रास्ता है, इसीलिए घर के सॉकेट समानांतर जुड़े होते हैं।",m_all:"हर बल्ब को पूरा {0} V मिलता है, इसलिए सब एक जैसे चमकते हैं। बल्ब हटाने के लिए उसे टैप करें।",m_sbreak:"एक बल्ब नहीं है, इसलिए एकमात्र रास्ता टूट गया और सब बुझ गया।",m_sdim:"{0} V बल्बों में बँट जाता है ({1} V), इसलिए वे मद्धम जलते हैं। 12 V आज़माएँ।",pol:"धन और ऋण क्यों मायने रखते हैं",polp:"बैटरी पलटिए, फिर प्रतिरोधक हटाइए।",flip:"बैटरी पलटें",resOn:"प्रतिरोधक: चालू",resOff:"प्रतिरोधक: बंद",reset:"रीसेट",resistor:"प्रतिरोधक",anode:"एनोड (+)",cathode:"कैथोड (−)",p_ok:"चलता है: धारा लंबे पैर (+) से आती है, छोटे पैर (−) से निकलती है, और प्रतिरोधक उसे सुरक्षित रखता है।",p_burn:"जल गया: धारा को कोई सीमित नहीं कर रहा। LED के साथ हमेशा प्रतिरोधक लगाएँ।",p_rev:"उलटा: LED धारा रोकती है और नहीं जलती। ज़्यादा वोल्टेज पर वह खराब हो सकती है।",calc:"प्रतिरोध कैलकुलेटर",calcsay:"समानांतर ({0} Ω) दोनों प्रतिरोधकों से कम है: ज़्यादा रास्ते, कम प्रतिरोध।",build:"बनाने की चेकलिस्ट",buildp:"हर कदम पूरा होते ही उसे टैप करें।",s1:"एक बिजली स्रोत और दो तार लें: लाल और काला",s2:"दो रेल बनाएँ: धन और ऋण",s3:"हर अवयव को रेलों के बीच जोड़ें: धन से धन, ऋण से ऋण",s4:"हर LED के साथ श्रेणी में उसका अपना प्रतिरोधक लगाएँ",s5:"वैकल्पिक: हर शाखा में एक स्विच जोड़ें",s6:"जाँचें कि धन कहीं ऋण को नहीं छू रहा, फिर चालू करें",done:"हो गया। अब चालू कर सकते हैं।",team:"हमारी टीम",leader:"ग्रुप लीडर",members:"टीम के सदस्य",spinT:"हमारा 3D मॉडल",spinP:"घुमाने के लिए ड्रैग करें, ज़ूम के लिए स्क्रॉल या पिंच करें, और बल्ब जलाने के लिए स्विच ऑन करें।",modOn:"पावर: चालू",modOff:"पावर: बंद",auto:"ऑटो-रोटेट"},
+ur:{tag:"الیکٹرانکس، عملی طور پر",h1a:"متوازی",h1b:"سرکٹ",hero:"ایک ایسا سرکٹ جسے آپ توڑ سکتے ہیں، الٹ سکتے ہیں اور ناپ سکتے ہیں۔ نیچے اسکرول کریں اور چھو کر دیکھیں۔",idea:"3 کارڈز میں خیال",c1t:"کئی راستے",c1p:"ہر پرزہ اپنی شاخ میں براہِ راست بیٹری سے جڑا ہوتا ہے۔",c2t:"یکساں وولٹیج",c2p:"ہر شاخ کو بیٹری کی پوری وولٹیج ملتی ہے۔",c3t:"کرنٹ جمع ہوتے ہیں",c3p:"بیٹری تمام شاخوں کے کرنٹ کا مجموعہ فراہم کرتی ہے۔",lab:"بنائیں، پھر توڑیں",labp:"متوازی اور سیریز کے درمیان بدلیں، وولٹیج کھینچیں، بلب ہٹانے کے لیے اسے ٹیپ کریں۔ بلب 6 V کے ہیں۔",par:"متوازی",ser:"سیریز",vb:"بلب پر وولٹیج",cur:"بیٹری سے کرنٹ",rt:"کل مزاحمت",open:"کھلا",rem:"ہٹا دیا",m_none:"تمام شاخیں کھلی ہیں: کوئی راستہ نہیں، کوئی کرنٹ نہیں۔",m_out:"ایک بلب بجھ گیا مگر باقی ویسے ہی ہیں۔ ہر شاخ کا اپنا راستہ ہے، اسی لیے گھر کے ساکٹ متوازی جڑے ہوتے ہیں۔",m_all:"ہر بلب کو پورے {0} V ملتے ہیں، اس لیے سب برابر چمکتے ہیں۔ بلب ہٹانے کے لیے اسے ٹیپ کریں۔",m_sbreak:"ایک بلب موجود نہیں، اس لیے واحد راستہ ٹوٹ گیا اور سب بجھ گیا۔",m_sdim:"{0} V بلبوں میں بٹ جاتے ہیں ({1} V)، اس لیے وہ مدھم جلتے ہیں۔ 12 V آزمائیں۔",pol:"مثبت اور منفی کیوں اہم ہیں",polp:"بیٹری الٹیں، پھر مزاحم ہٹا دیں۔",flip:"بیٹری الٹیں",resOn:"مزاحم: آن",resOff:"مزاحم: آف",reset:"ری سیٹ",resistor:"مزاحم",anode:"اینوڈ (+)",cathode:"کیتھوڈ (−)",p_ok:"کام کرتا ہے: کرنٹ لمبی ٹانگ (+) سے داخل ہو کر چھوٹی ٹانگ (−) سے نکلتا ہے، اور مزاحم اسے محفوظ رکھتا ہے۔",p_burn:"جل گیا: کرنٹ کو کوئی محدود نہیں کر رہا۔ LED کے ساتھ ہمیشہ مزاحم لگائیں۔",p_rev:"الٹا: LED کرنٹ روک دیتی ہے اور نہیں جلتی۔ زیادہ وولٹیج پر خراب ہو سکتی ہے۔",calc:"مزاحمت کیلکولیٹر",calcsay:"متوازی ({0} Ω) دونوں مزاحموں سے کم ہے: زیادہ راستے، کم مزاحمت۔",build:"بنانے کی چیک لسٹ",buildp:"ہر قدم مکمل ہونے پر اسے ٹیپ کریں۔",s1:"ایک پاور سورس اور دو تار لیں: سرخ اور سیاہ",s2:"دو ریل بنائیں: مثبت اور منفی",s3:"ہر پرزے کو ریلوں کے درمیان جوڑیں: مثبت سے مثبت، منفی سے منفی",s4:"ہر LED کے ساتھ سیریز میں اس کا اپنا مزاحم لگائیں",s5:"اختیاری: ہر شاخ میں ایک سوئچ شامل کریں",s6:"دیکھ لیں کہ مثبت کہیں منفی کو نہیں چھو رہا، پھر آن کریں",done:"ہو گیا۔ اب آن کر سکتے ہیں۔",team:"ہماری ٹیم",leader:"گروپ لیڈر",members:"ٹیم کے ارکان",spinT:"ہمارا 3D ماڈل",spinP:"گھمانے کے لیے گھسیٹیں، زوم کے لیے اسکرول یا پنچ کریں، اور بلب جلانے کے لیے سوئچ آن کریں۔",modOn:"پاور: آن",modOff:"پاور: آف",auto:"خودکار گھماؤ"}
+};
+
+function t(k,a,b){var s=(L[lang]&&L[lang][k])||L.en[k];return s.replace("{0}",a).replace("{1}",b)}
+var R=[10,20,40],X=[190,320,450],mode="parallel",V=6,on=[true,true,true];
+
+function sim(){
+  var I=[0,0,0],Vb=[0,0,0],Rt=Infinity,It=0,i,g=0;
+  if(mode==="parallel"){
+    for(i=0;i<3;i++)if(on[i]){Vb[i]=V;I[i]=V/R[i];g+=1/R[i];It+=I[i]}
+    Rt=g?1/g:Infinity;
+  }else if(on[0]&&on[1]&&on[2]){
+    Rt=R[0]+R[1]+R[2];It=V/Rt;
+    for(i=0;i<3;i++){I[i]=It;Vb[i]=It*R[i]}
+  }
+  return{I:I,Vb:Vb,Rt:Rt,It:It};
+}
+function dur(i){return Math.max(.35,Math.min(4,.6/i)).toFixed(2)+"s"}
+
+function bulb(x,y,i,s){
+  var o=on[i],gl=o?Math.min(1,Math.pow(s.Vb[i]/6,2)):0,h="";
+  h+='<g data-i="'+i+'" transform="translate('+x+','+y+')" style="cursor:pointer">';
+  h+='<circle r="34" fill="#232A35" stroke="'+(o?"#9aa7bd":"#566175")+'" stroke-width="4"'+(o?"":' stroke-dasharray="7 7"')+'/>';
+  if(o){
+    h+='<circle r="'+(34+gl*22).toFixed(0)+'" fill="#FFD23F" opacity="'+(gl*.18).toFixed(2)+'"/><circle r="34" fill="#FFD23F" opacity="'+gl.toFixed(2)+'"/>';
+    h+='<path d="M-14,12 L-7,-8 L0,12 L7,-8 L14,12" fill="none" stroke="'+(gl>.5?"#7a5200":"#9aa7bd")+'" stroke-width="3" stroke-linecap="round"/>';
+  }else h+='<text y="9" text-anchor="middle" font-size="28" fill="#8892a6">✕</text>';
+  h+='<text y="62" text-anchor="middle" font-size="17" font-weight="600" fill="#cfcabf">'+R[i]+' Ω</text>';
+  h+='<text y="82" text-anchor="middle" font-size="15" fill="#9aa4b5">'+(o?s.I[i].toFixed(2)+" A":t("rem"))+'</text></g>';
+  return h;
+}
+function battery(){
+  return '<path class="wire" d="M60,110V150M60,170V230"/><path d="M38,150H82" stroke="#FF6B5E" stroke-width="6" stroke-linecap="round"/><path d="M48,172H72" stroke="#4DA3FF" stroke-width="6" stroke-linecap="round"/>'+
+  '<text x="96" y="156" font-size="24" font-weight="800" fill="#FF6B5E">+</text><text x="98" y="182" font-size="26" font-weight="800" fill="#4DA3FF">−</text>';
+}
+function draw1(){
+  var s=sim(),h="",i;
+  if(mode==="parallel"){
+    h+='<path class="wire" d="M60,110V60H450M60,230V280H450M190,60V280M320,60V280M450,60V280"/>';
+    for(i=0;i<3;i++)if(on[i])h+='<path class="flow" style="animation-duration:'+dur(s.I[i])+'" d="M60,110V60H'+X[i]+'V280H60V230"/>';
+    h+=battery();
+    for(i=0;i<3;i++)h+=bulb(X[i],170,i,s);
+  }else{
+    h+='<path class="wire" d="M60,110V60H540V280H60V230"/>';
+    if(s.It>0)h+='<path class="flow" style="animation-duration:'+dur(s.It)+'" d="M60,110V60H540V280H60V230"/>';
+    h+=battery();
+    for(i=0;i<3;i++)h+=bulb(X[i],60,i,s);
+  }
+  $("#c1").innerHTML=h;
+  var n=on.filter(Boolean).length,vb=Math.max.apply(null,s.Vb);
+  $("#sV").textContent=n&&s.It>0?(mode==="parallel"?V:vb.toFixed(1))+" V":"0 V";
+  $("#sI").textContent=s.It.toFixed(2)+" A";
+  $("#sR").textContent=isFinite(s.Rt)?s.Rt.toFixed(1)+" Ω":t("open");
+  var tx,c="say",V1=s.Vb.map(function(v){return v.toFixed(1)}).join(", ");
+  if(mode==="parallel"){if(!n){tx=t("m_none");c+=" bad"}else if(n<3){tx=t("m_out");c+=" good"}else tx=t("m_all",V)}
+  else{if(n<3){tx=t("m_sbreak");c+=" bad"}else tx=t("m_sdim",V,V1)}
+  $("#say1").className=c;$("#say1").textContent=tx;
+}
+$("#c1").addEventListener("click",function(e){
+  var g=e.target.closest("g[data-i]");if(!g)return;
+  var i=+g.getAttribute("data-i");on[i]=!on[i];draw1();
+});
+$("#mP").onclick=function(){mode="parallel";$("#mP").className="on";$("#mS").className="";draw1()};
+$("#mS").onclick=function(){mode="series";$("#mS").className="on";$("#mP").className="";draw1()};
+var pend=false;
+$("#volt").oninput=function(){V=+this.value;$("#vl").textContent=V+" V";if(!pend){pend=true;requestAnimationFrame(function(){pend=false;draw1()})}};
+$("#volt").addEventListener("change",function(){});
+draw1();
+
+/* polarity */
+var flip=false,res=true;
+function draw2(){
+  var burn=!flip&&!res,ok=!flip&&res,h="";$("#pR").textContent=t(res?"resOn":"resOff");
+  var topPlus=!flip;
+  h+='<path class="wire" d="M70,120V40H180M270,40H470V95M470,160V260H70V140"/>';
+  if(res)h+='<path d="M180,40l10,-16l16,32l16,-32l16,32l10,-16" fill="none" stroke="#cfcabf" stroke-width="5" stroke-linejoin="round"/><text x="225" y="84" text-anchor="middle" font-size="15" fill="#9aa4b5">'+t("resistor")+'</text>';
+  else h+='<path d="M180,40H270" stroke="#FF6B5E" stroke-width="5" stroke-dasharray="3 9" stroke-linecap="round"/>';
+  h+='<path d="M70,120V140" stroke="#14181F" stroke-width="12"/>';
+  h+='<path d="M'+(topPlus?38:50)+',120H'+(topPlus?102:90)+'" stroke="'+(topPlus?"#FF6B5E":"#4DA3FF")+'" stroke-width="6" stroke-linecap="round"/>';
+  h+='<path d="M'+(topPlus?50:38)+',142H'+(topPlus?90:102)+'" stroke="'+(topPlus?"#4DA3FF":"#FF6B5E")+'" stroke-width="6" stroke-linecap="round"/>';
+  h+='<text x="116" y="127" font-size="24" font-weight="800" fill="'+(topPlus?"#FF6B5E":"#4DA3FF")+'">'+(topPlus?"+":"−")+'</text><text x="116" y="152" font-size="24" font-weight="800" fill="'+(topPlus?"#4DA3FF":"#FF6B5E")+'">'+(topPlus?"−":"+")+'</text>';
+  if(ok)h+='<path class="flow" style="animation-duration:1s" d="M70,120V40H470V95M470,160V260H70V140"/>';
+  var col=burn?"#2b2b2b":"#3CFF8A";
+  h+='<g transform="translate(0,0)">';
+  if(ok)h+='<circle cx="470" cy="128" r="72" fill="#3CFF8A" opacity=".16"/><circle cx="470" cy="128" r="46" fill="#3CFF8A" opacity=".85"/>';
+  h+='<path d="M440,95H500L470,155Z" fill="'+(ok?"#bfffd8":"#232A35")+'" stroke="'+(burn?"#555":"#3CFF8A")+'" stroke-width="5" stroke-linejoin="round"/><path d="M438,160H502" stroke="'+col+'" stroke-width="6" stroke-linecap="round"/>';
+  if(burn)h+='<text x="470" y="128" text-anchor="middle" font-size="40">💥</text>';
+  h+='</g><text x="520" y="102" font-size="15" fill="#9aa4b5">'+t("anode")+'</text><text x="520" y="178" font-size="15" fill="#9aa4b5">'+t("cathode")+'</text><text x="470" y="290" text-anchor="middle" font-size="16" fill="#9aa4b5">LED</text>';
+  $("#c2").innerHTML=h;
+  var m=$("#say2");
+  if(ok){m.className="say good";m.textContent=t("p_ok")}
+  else if(burn){m.className="say bad";m.textContent=t("p_burn")}
+  else{m.className="say bad";m.textContent=t("p_rev")}
+}
+$("#pF").onclick=function(){flip=!flip;draw2()};
+$("#pR").onclick=function(){res=!res;this.className=res?"on":"";draw2()};
+$("#pX").onclick=function(){flip=false;res=true;$("#pR").className="on";draw2()};
+draw2();
+
+/* calculator */
+function calc(){
+  var a=Math.max(1,+$("#r1").value||1),b=Math.max(1,+$("#r2").value||1),s=a+b,p=a*b/(a+b),m=s;
+  function row(l,v,c){return '<div style="width:'+Math.max(18,v/m*100)+'%;background:'+c+'">'+l+' '+(Math.round(v*100)/100)+' Ω</div>'}
+  $("#bars").innerHTML=row(t("ser"),s,"#F5A623")+row(t("par"),p,"#3CFF8A")+row("R₁",a,"#8892a6")+row("R₂",b,"#8892a6");
+  $("#say3").textContent=t("calcsay",Math.round(p*100)/100);
+}
+$("#r1").oninput=calc;$("#r2").oninput=calc;calc();
+
+/* falling-letters headline effect */
+var RM=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;
+function fall(){
+  if(RM)return;
+  var grouped=!(lang==="zh"||lang==="ur"||lang==="hi"||lang==="th"),byWord=(lang==="ur"||lang==="hi"||lang==="th");
+  [].forEach.call(document.querySelectorAll("h1,h2"),function(h){
+    var n=0,full=[];
+    h.style.setProperty("--st",byWord?"150ms":"42ms");
+    [].forEach.call(h.querySelectorAll("[data-t]"),function(e){
+      var txt=t(e.getAttribute("data-t")),words=txt.split(" ");
+      full.push(txt);e.textContent="";
+      function unit(ch,par){
+        var s=document.createElement("span");s.className="lt";s.setAttribute("aria-hidden","true");s.textContent=ch;
+        s.style.setProperty("--i",n++);
+        s.style.setProperty("--r",(Math.random()*36-18).toFixed(1)+"deg");
+        s.style.setProperty("--h",(90+Math.floor(Math.random()*90))+"px");
+        par.appendChild(s);
+      }
+      words.forEach(function(w,wi){
+        if(byWord)unit(w,e);
+        else if(grouped){var ws=document.createElement("span");ws.className="w";Array.from(w).forEach(function(ch){unit(ch,ws)});e.appendChild(ws)}
+        else Array.from(w).forEach(function(ch){unit(ch,e)});
+        if(wi<words.length-1)e.appendChild(document.createTextNode(" "));
+      });
+    });
+    h.setAttribute("aria-label",full.join(" "));
+  });
+}
+
+/* 3D model of our circuit board (raw WebGL, no libraries) */
+var upd=null;
+function spinUpdate(){if(upd)upd()}
+function initModel(){
+var cv=$("#gl"),gl=cv.getContext("webgl",{antialias:true})||cv.getContext("experimental-webgl");
+if(!gl){$("#spin").innerHTML='<div style="padding:40px;text-align:center;color:#9aa4b5">WebGL is not supported in this browser.</div>';return}
+
+/* ---------- tiny math ---------- */
+function M(){return new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1])}
+function mul(a,b){var o=new Float32Array(16),c,r,k,s;for(c=0;c<4;c++)for(r=0;r<4;r++){s=0;for(k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s}return o}
+function tr(x,y,z){var m=M();m[12]=x;m[13]=y;m[14]=z;return m}
+function sc(x,y,z){var m=M();m[0]=x;m[5]=y;m[10]=z;return m}
+function rz(a){var m=M(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m}
+function persp(fv,a,n,f){var t=1/Math.tan(fv/2),m=new Float32Array(16);m[0]=t/a;m[5]=t;m[10]=(f+n)/(n-f);m[11]=-1;m[14]=2*f*n/(n-f);return m}
+function sub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]]}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function crs(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
+function nrm(a){var l=Math.sqrt(dot(a,a))||1;return[a[0]/l,a[1]/l,a[2]/l]}
+function look(e,c,u){var z=nrm(sub(e,c)),x=nrm(crs(u,z)),y=crs(z,x);
+  return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,e),-dot(y,e),-dot(z,e),1])}
+function C(h){return[parseInt(h.substr(1,2),16)/255,parseInt(h.substr(3,2),16)/255,parseInt(h.substr(5,2),16)/255]}
+
+/* ---------- primitive geometry ---------- */
+function mkBox(){
+  var F=[[[0,0,1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],[[0,0,-1],[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1]],
+         [[1,0,0],[1,-1,1],[1,-1,-1],[1,1,-1],[1,1,1]],[[-1,0,0],[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1]],
+         [[0,1,0],[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1]],[[0,-1,0],[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1]]];
+  var P=[],N=[],I=[];
+  F.forEach(function(f){var b=P.length/3,k;for(k=1;k<5;k++){P.push(f[k][0]/2,f[k][1]/2,f[k][2]/2);N.push(f[0][0],f[0][1],f[0][2])}I.push(b,b+1,b+2,b,b+2,b+3)});
+  return{p:P,n:N,i:I};
+}
+function mkCyl(s){
+  var P=[],N=[],I=[],i,a,b;
+  for(i=0;i<=s;i++){a=i/s*Math.PI*2;P.push(Math.cos(a),0,Math.sin(a),Math.cos(a),1,Math.sin(a));N.push(Math.cos(a),0,Math.sin(a),Math.cos(a),0,Math.sin(a))}
+  for(i=0;i<s;i++){var k=i*2;I.push(k,k+1,k+3,k,k+3,k+2)}
+  b=P.length/3;P.push(0,1,0);N.push(0,1,0);
+  for(i=0;i<=s;i++){a=i/s*Math.PI*2;P.push(Math.cos(a),1,Math.sin(a));N.push(0,1,0)}
+  for(i=0;i<s;i++)I.push(b,b+1+i,b+2+i);
+  b=P.length/3;P.push(0,0,0);N.push(0,-1,0);
+  for(i=0;i<=s;i++){a=i/s*Math.PI*2;P.push(Math.cos(a),0,Math.sin(a));N.push(0,-1,0)}
+  for(i=0;i<s;i++)I.push(b,b+2+i,b+1+i);
+  return{p:P,n:N,i:I};
+}
+function mkSph(la,lo){
+  var P=[],N=[],I=[],i,j;
+  for(i=0;i<=la;i++){var th=i/la*Math.PI,st=Math.sin(th),ct=Math.cos(th);
+    for(j=0;j<=lo;j++){var ph=j/lo*Math.PI*2,x=st*Math.cos(ph),z=st*Math.sin(ph);P.push(x,ct,z);N.push(x,ct,z)}}
+  for(i=0;i<la;i++)for(j=0;j<lo;j++){var a=i*(lo+1)+j,b=a+lo+1;I.push(a,b,a+1,a+1,b,b+1)}
+  return{p:P,n:N,i:I};
+}
+var BOX=mkBox(),CYL=mkCyl(22),SPH=mkSph(10,16),BULB=mkSph(16,28);
+
+/* ---------- vertex buffer builder (world-space, baked) ---------- */
+function Buf(){this.v=[];this.i=[];this.n=0}
+Buf.prototype.add=function(g,m,col,em,sp){
+  var o=this.n,p=g.p,nn=g.n,k,x,y,z,nx,ny,nz,ax,ay,az,l;
+  for(k=0;k<p.length;k+=3){
+    x=p[k];y=p[k+1];z=p[k+2];nx=nn[k];ny=nn[k+1];nz=nn[k+2];
+    this.v.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14]);
+    ax=m[0]*nx+m[4]*ny+m[8]*nz;ay=m[1]*nx+m[5]*ny+m[9]*nz;az=m[2]*nx+m[6]*ny+m[10]*nz;
+    l=Math.sqrt(ax*ax+ay*ay+az*az)||1;
+    this.v.push(ax/l,ay/l,az/l,col[0],col[1],col[2],em||0,sp||0);
+  }
+  for(k=0;k<g.i.length;k++)this.i.push(g.i[k]+o);
+  this.n+=p.length/3;
+};
+function part(b,g,x,y,z,sx,sy,sz,col,em,sp,ext){var m=tr(x,y,z);if(ext)m=mul(m,ext);m=mul(m,sc(sx,sy,sz));b.add(g,m,col,em,sp)}
+
+function cr(P,k){
+  var o=[],i,j,c,n=P.length;
+  for(i=0;i<n-1;i++){
+    var p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(n-1,i+2)];
+    for(j=0;j<k;j++){var t=j/k,t2=t*t,t3=t2*t,q=[];
+      for(c=0;c<3;c++)q.push(.5*(2*p1[c]+(-p0[c]+p2[c])*t+(2*p0[c]-5*p1[c]+4*p2[c]-p3[c])*t2+(-p0[c]+3*p1[c]-3*p2[c]+p3[c])*t3));
+      o.push(q)}
+  }
+  o.push(P[n-1]);return o;
+}
+function tube(buf,pts,r,seg,col,sp){
+  var d=cr(pts,9),n=d.length,i,j,T=[],g={p:[],n:[],i:[]};
+  for(i=0;i<n;i++)T.push(nrm(sub(d[Math.min(n-1,i+1)],d[Math.max(0,i-1)])));
+  var ref=Math.abs(T[0][1])<.9?[0,1,0]:[1,0,0],nn=nrm(crs(T[0],ref)),bb;
+  for(i=0;i<n;i++){
+    var t=T[i],dd=dot(nn,t);nn=nrm([nn[0]-t[0]*dd,nn[1]-t[1]*dd,nn[2]-t[2]*dd]);bb=crs(t,nn);
+    for(j=0;j<=seg;j++){var ang=j/seg*Math.PI*2,c=Math.cos(ang),s=Math.sin(ang),
+      dx=c*nn[0]+s*bb[0],dy=c*nn[1]+s*bb[1],dz=c*nn[2]+s*bb[2];
+      g.p.push(d[i][0]+r*dx,d[i][1]+r*dy,d[i][2]+r*dz);g.n.push(dx,dy,dz)}
+  }
+  for(i=0;i<n-1;i++)for(j=0;j<seg;j++){var a0=i*(seg+1)+j,b0=a0+seg+1;g.i.push(a0,b0,a0+1,a0+1,b0,b0+1)}
+  buf.add(g,M(),col,0,sp);
+}
+
+/* ---------- build the scene ---------- */
+var OP=new Buf(),GL=new Buf(),GU=new Buf(),HA=new Buf(),FL=new Buf(),LV=new Buf();
+var tan=C("#D4A76A"),tan2=C("#C79A5C"),core=C("#9C7241"),ink=C("#2a2116"),blk=C("#18181c"),brass=C("#CDA64C"),
+    silver=C("#C4C7CC"),copper=C("#CF7440"),dark=C("#060607"),wire=C("#141418"),red=C("#E0362C"),blue=C("#3F95E0"),
+    glueC=C("#E9DBA4"),glassC=C("#EAF2F7"),fil=C("#8D8670"),hot=C("#FFE08A");
+
+/* cardboard: liner / flute / liner */
+part(OP,BOX,0,-.06,0,30,.12,20,tan,0,.04);
+part(OP,BOX,0,-.35,0,29.7,.46,19.7,core,0,0);
+part(OP,BOX,0,-.64,0,30,.12,20,tan2,0,.03);
+/* pencil lines */
+part(OP,BOX,0,.008,8.7,28.4,.02,.08,ink);part(OP,BOX,0,.008,-8.7,28.4,.02,.08,ink);
+part(OP,BOX,-14.2,.008,0,.08,.02,17.4,ink);part(OP,BOX,14.2,.008,0,.08,.02,17.4,ink);
+
+var Z0=4.5,XS=[],TA=[],TB=[],i;
+for(i=0;i<5;i++){
+  var x=-12+6*i;XS.push(x);
+  part(OP,BOX,x,.008,0,.08,.02,17.4,ink);
+  TA.push([x,.9,Z0-1.35]);TB.push([x,.9,Z0+1.35]);
+  /* hot glue */
+  part(GU,CYL,x,0,Z0,2.55,.26,2.45,glueC);
+  part(GU,CYL,x+1.2,0,Z0-.8,1.4,.2,1.3,glueC);
+  part(GU,CYL,x-1,0,Z0+1,1.5,.22,1.4,glueC);
+  /* holder */
+  part(OP,CYL,x,0,Z0,1.85,.55,1.85,blk,0,.45);
+  part(OP,CYL,x,.55,Z0,1.05,.75,1.05,blk,0,.35);
+  var k;for(k=0;k<5;k++)part(OP,CYL,x,1.3+k*.15,Z0,k%2?.72:.86,.15,k%2?.72:.86,brass,0,.7);
+  part(OP,CYL,x,2.05,Z0,.6,.3,.6,silver,0,.7);
+  part(OP,BOX,x+1.2,.553,Z0,.3,.012,.3,dark);
+  /* screws + copper twists */
+  part(OP,CYL,x,.55,Z0-1.35,.36,.22,.36,silver,0,.8);part(OP,BOX,x,.78,Z0-1.35,.5,.03,.07,dark);
+  part(OP,CYL,x,.55,Z0+1.35,.36,.22,.36,silver,0,.8);part(OP,BOX,x,.78,Z0+1.35,.5,.03,.07,dark);
+  part(OP,SPH,x,.88,Z0-1.35,.34,.26,.34,copper,0,.5);
+  part(OP,SPH,x,.88,Z0+1.35,.34,.26,.34,copper,0,.5);
+  /* filament */
+  part(OP,CYL,x-.18,2.3,Z0,.05,.95,.05,fil,.4,0);part(OP,CYL,x+.18,2.3,Z0,.05,.95,.05,fil,.4,0);
+  part(OP,BOX,x,3.2,Z0,.5,.1,.1,hot,1,0);
+  /* glass bulb + halo */
+  part(GL,BULB,x,3.3,Z0,1.02,1.1,1.02,glassC);
+  part(HA,BULB,x,3.3,Z0,2.7,2.7,2.7,hot);
+}
+
+/* wires */
+function W(P,Q,bz,lift,col){
+  var dx=Q[0]-P[0];
+  tube(OP,[P,[P[0],P[1]+.7,P[2]],[P[0]+dx*.25,P[1]+lift*.8,P[2]+bz*.7],[P[0]+dx*.5,P[1]+lift,P[2]+bz],[Q[0]-dx*.25,Q[1]+lift*.8,Q[2]+bz*.7],[Q[0],Q[1]+.7,Q[2]],Q],.17,8,col,.35);
+}
+W(TB[0],TA[1],-7.5,1.6,wire);
+W(TB[1],TA[2],4.5,2.2,wire);
+W(TB[2],TA[3],-8.5,1.4,wire);
+W(TB[3],TA[4],3.8,2.4,wire);
+
+/* battery holder (underside, open cells face down) */
+var BX=-11.8;
+part(OP,BOX,BX,-1.5,0,6.3,1.6,7.8,C("#1a1a1e"),0,.3);
+part(OP,BOX,BX,-1.5,0,6.32,1.62,.16,C("#0c0c0e"));
+var sl=[-2.925,-.975,.975,2.925];
+sl.forEach(function(z){
+  part(OP,BOX,BX,-2.3,z,5.5,.05,1.55,dark);
+  part(OP,BOX,BX-2.65,-2.28,z,.14,.14,1.15,brass,0,.7);
+  part(OP,BOX,BX+2.65,-2.28,z,.14,.14,1.15,brass,0,.7);
+  part(OP,CYL,BX+2.45,-2.28,z,.28,.2,.28,silver,0,.8,rz(Math.PI/2));
+});
+
+/* toggle switch hanging off the corner */
+var SW=[-19.5,-2.6,-6];
+part(OP,BOX,SW[0],SW[1],SW[2],2,2.6,1.7,blue,0,.35);
+part(OP,BOX,SW[0],SW[1]+1.31,SW[2],1.4,.06,1.2,C("#2f78bd"));
+part(OP,CYL,SW[0],SW[1]+1.3,SW[2],.78,.28,.78,silver,0,.8);
+part(OP,CYL,SW[0],SW[1]+1.55,SW[2],.55,.18,.55,C("#9fa3a9"),0,.8);
+[-.55,0,.55].forEach(function(z){part(OP,BOX,SW[0],SW[1]-1.45,SW[2]+z,.22,.4,.1,silver,0,.8)});
+part(OP,SPH,SW[0],SW[1]-1.78,SW[2]-.55,.28,.22,.28,copper,0,.5);
+part(OP,SPH,SW[0],SW[1]-1.78,SW[2]+.55,.28,.22,.28,copper,0,.5);
+/* lever (animated separately) */
+part(LV,CYL,0,0,0,.17,2.5,.17,silver,0,.9);
+part(LV,SPH,0,2.5,0,.32,.32,.32,silver,0,.9);
+var PIV=[SW[0],SW[1]+1.7,SW[2]];
+
+/* black lead: switch -> first bulb */
+tube(OP,[[SW[0],SW[1]-1.75,SW[2]+.55],[-19.1,-4,-4],[-17.3,-1.4,-.6],[-15.4,.4,1.2],[-13.6,1,2.3],TA[0]],.17,8,wire,.35);
+/* black lead: last bulb -> battery (runs under the board) */
+tube(OP,[TB[4],[12.4,1.9,8.2],[15.7,.9,8.6],[16.3,-.8,7.4],[14.5,-1.12,5.8],[6,-1.12,4.8],[-3,-1.12,4.4],[-8.2,-1.4,3],[BX+3.15,-1.5,2.1]],.17,8,wire,.35);
+/* red lead: switch -> battery */
+tube(OP,[[SW[0],SW[1]-1.75,SW[2]-.55],[-19.9,-4.9,-4.4],[-17.9,-3.4,-2.6],[-16.2,-2.3,-1.9],[BX-3.15,-1.6,-1.5]],.17,8,red,.4);
+
+/* floor */
+(function(){var Y=-6.6;FL.add({p:[-50,Y,-50,50,Y,-50,50,Y,50,-50,Y,50],n:[0,1,0,0,1,0,0,1,0,0,1,0],i:[0,2,1,0,3,2]},M(),[.15,.18,.22],0,0)})();
+
+/* ---------- GL program ---------- */
+var VS="attribute vec3 aP;attribute vec3 aN;attribute vec3 aC;attribute vec2 aM;uniform mat4 uVP;uniform mat4 uM;varying vec3 vN;varying vec3 vC;varying vec3 vW;varying vec2 vM;"+
+"void main(){vec4 w=uM*vec4(aP,1.);vW=w.xyz;vN=(uM*vec4(aN,0.)).xyz;vC=aC;vM=aM;gl_Position=uVP*w;}";
+var FS="#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n"+
+"varying vec3 vN;varying vec3 vC;varying vec3 vW;varying vec2 vM;uniform vec3 uCam;uniform float uOn;uniform float uMode;uniform float uA;"+
+"void main(){vec3 N=normalize(vN);vec3 V=normalize(uCam-vW);"+
+"if(uMode>.5&&uMode<1.5){float c=mod(floor(vW.x/4.)+floor(vW.z/4.),2.);vec3 b=mix(vec3(.125,.155,.195),vec3(.15,.185,.23),c);"+
+"float d=length(vec2(vW.x/19.,vW.z/13.));b*=mix(.4,1.,smoothstep(.45,1.25,d));float f=1.-smoothstep(16.,46.,length(vW.xz));"+
+"gl_FragColor=vec4(mix(vec3(.106,.129,.169),b,f),1.);return;}"+
+"if(uMode>2.5&&uMode<3.5){float k=pow(abs(dot(N,V)),1.6);gl_FragColor=vec4(vec3(1.,.78,.2),uA*uOn*k);return;}"+
+"vec3 L1=normalize(vec3(.45,1.,.55));vec3 L2=normalize(vec3(-.7,.35,-.5));"+
+"float d1=max(dot(N,L1),0.);float d2=max(dot(N,L2),0.);"+
+"vec3 col=vC*(.42+.1*N.y+.2*max(-N.y,0.)+.78*d1+.22*d2);"+
+"vec3 H=normalize(L1+V);col+=vM.y*pow(max(dot(N,H),0.),36.)*vec3(.9);"+
+"col+=uOn*vM.x*vec3(1.,.8,.25)*1.3;float a=1.;"+
+"if(uMode>3.5){a=uA;}else if(uMode>1.5){a=uA*(.3+.7*pow(1.-abs(dot(N,V)),2.))+uOn*.3;col+=uOn*vec3(1.,.8,.3)*.55;}"+
+"gl_FragColor=vec4(col,a);}";
+function sh(type,src){var s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(s));return s}
+var pg=gl.createProgram();gl.attachShader(pg,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pg,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pg);
+if(!gl.getProgramParameter(pg,gl.LINK_STATUS))console.error(gl.getProgramInfoLog(pg));
+gl.useProgram(pg);
+var U={};["uVP","uM","uCam","uOn","uMode","uA"].forEach(function(n){U[n]=gl.getUniformLocation(pg,n)});
+var AT={aP:[gl.getAttribLocation(pg,"aP"),3,0],aN:[gl.getAttribLocation(pg,"aN"),3,12],aC:[gl.getAttribLocation(pg,"aC"),3,24],aM:[gl.getAttribLocation(pg,"aM"),2,36]};
+function upload(b){
+  var vb=gl.createBuffer(),ib=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(b.v),gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(b.i),gl.STATIC_DRAW);
+  return{vb:vb,ib:ib,n:b.i.length};
+}
+var G={op:upload(OP),gl:upload(GL),gu:upload(GU),ha:upload(HA),fl:upload(FL),lv:upload(LV)};
+function draw(o,mode,a,m){
+  gl.bindBuffer(gl.ARRAY_BUFFER,o.vb);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.ib);
+  for(var n in AT){gl.enableVertexAttribArray(AT[n][0]);gl.vertexAttribPointer(AT[n][0],AT[n][1],gl.FLOAT,false,44,AT[n][2])}
+  gl.uniform1f(U.uMode,mode);gl.uniform1f(U.uA,a);gl.uniformMatrix4fv(U.uM,false,m||IDM);
+  gl.drawElements(gl.TRIANGLES,o.n,gl.UNSIGNED_SHORT,0);
+}
+var IDM=M();
+
+/* ---------- camera / interaction ---------- */
+var tgt=[-1,-1.5,0],V0={yaw:.75,pitch:.5,dist:48},yaw=V0.yaw,pitch=V0.pitch,dist=V0.dist,
+    pwr=true,auto=!(window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches),glow=1,lev=-.45,dirty=true;
+function btn(){$("#spA").className=auto?"on":"";$("#spL").className=pwr?"on":"";$("#spL").textContent=t(pwr?"modOn":"modOff")}
+upd=function(){btn();dirty=true};
+
+function render(){
+  var w=cv.clientWidth,h=cv.clientHeight,dp=Math.min(window.devicePixelRatio||1,2);
+  if(!w||!h)return;
+  if(cv.width!==((w*dp)|0)||cv.height!==((h*dp)|0)){cv.width=(w*dp)|0;cv.height=(h*dp)|0}
+  gl.viewport(0,0,cv.width,cv.height);
+  gl.clearColor(.106,.129,.169,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  var cp=Math.cos(pitch),eye=[tgt[0]+dist*cp*Math.sin(yaw),tgt[1]+dist*Math.sin(pitch),tgt[2]+dist*cp*Math.cos(yaw)];
+  var vp=mul(persp(.7,cv.width/cv.height,1,300),look(eye,tgt,[0,1,0]));
+  gl.uniformMatrix4fv(U.uVP,false,vp);gl.uniform3f(U.uCam,eye[0],eye[1],eye[2]);gl.uniform1f(U.uOn,glow);
+  gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);
+  if(eye[1]>-6.6)draw(G.fl,1,1);
+  draw(G.op,0,1);
+  draw(G.lv,0,1,mul(tr(PIV[0],PIV[1],PIV[2]),rz(lev)));
+  gl.enable(gl.BLEND);gl.depthMask(false);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  draw(G.gu,4,.55);
+  draw(G.gl,2,.5);
+  gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
+  if(glow>.01)draw(G.ha,3,.38);
+  gl.depthMask(true);gl.disable(gl.BLEND);
+}
+
+var ptrs={},pd=0;
+function ids(){return Object.keys(ptrs)}
+cv.addEventListener("pointerdown",function(e){
+  try{cv.setPointerCapture(e.pointerId)}catch(_){}
+  ptrs[e.pointerId]=[e.clientX,e.clientY];pd=0;auto=false;btn();
+});
+cv.addEventListener("pointermove",function(e){
+  var p=ptrs[e.pointerId];if(!p)return;
+  var k=ids();
+  if(k.length===1){
+    yaw-=(e.clientX-p[0])*.008;pitch+=(e.clientY-p[1])*.006;
+    pitch=Math.max(-1.2,Math.min(1.5,pitch));
+  }
+  p[0]=e.clientX;p[1]=e.clientY;
+  if(k.length===2){
+    var a=ptrs[k[0]],b=ptrs[k[1]],nd=Math.hypot(a[0]-b[0],a[1]-b[1]);
+    if(pd&&nd)dist=Math.max(22,Math.min(95,dist*pd/nd));
+    pd=nd;
+  }
+  dirty=true;
+});
+function up(e){delete ptrs[e.pointerId];pd=0}
+cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+cv.addEventListener("wheel",function(e){e.preventDefault();dist=Math.max(22,Math.min(95,dist*Math.exp(e.deltaY*.001)));dirty=true},{passive:false});
+window.addEventListener("resize",function(){dirty=true});
+
+$("#spA").onclick=function(){auto=!auto;btn()};
+$("#spL").onclick=function(){pwr=!pwr;btn();dirty=true};
+$("#spR").onclick=function(){yaw=V0.yaw;pitch=V0.pitch;dist=V0.dist;dirty=true};
+btn();
+
+var last=performance.now();
+function loop(now){
+  var dt=Math.min(50,now-last)/16.7;last=now;
+  if(auto){yaw+=.006*dt;dirty=true}
+  var tg=pwr?1:0;if(Math.abs(glow-tg)>.01){glow+=(tg-glow)*.16*dt;dirty=true}else if(glow!==tg){glow=tg;dirty=true}
+  var tl=pwr?-.45:.45;if(Math.abs(lev-tl)>.005){lev+=(tl-lev)*.25*dt;dirty=true}else if(lev!==tl){lev=tl;dirty=true}
+  if(dirty){dirty=false;render()}
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+}
+initModel();
+
+function setLang(x){
+  lang=x;document.documentElement.lang=x==="zh"?"zh-Hant":x;document.documentElement.dir=x==="ur"?"rtl":"ltr";
+  [].forEach.call(document.querySelectorAll("[data-t]"),function(e){e.textContent=t(e.getAttribute("data-t"))});
+  fall();$("#lg").value=x;document.title=t("h1a")+" "+t("h1b");draw1();draw2();calc();spinUpdate();
+  try{localStorage.setItem("lang",x)}catch(e){}
+}
+$("#lg").onchange=function(){setLang(this.value)};
+var q;try{q=localStorage.getItem("lang")}catch(e){}
+setLang(L[q]?q:"en");
+
+/* pause the flowing-current animations while they are off screen */
+if("IntersectionObserver" in window){
+  var fio=new IntersectionObserver(function(es){es.forEach(function(e){e.target.classList.toggle("off",!e.isIntersecting)})},{rootMargin:"100px"});
+  [].forEach.call(document.querySelectorAll(".flow"),function(f){var sv=f.closest("svg");if(sv)fio.observe(sv)});
+}
+
+/* buttery mouse-wheel scrolling (desktop mouse only; touch and trackpads stay native) */
+(function(){
+  if(RM||!window.matchMedia||!matchMedia("(hover:hover) and (pointer:fine)").matches)return;
+  var de=document.documentElement,target=0,cur=0,raf=0,prev=0;
+  function maxY(){return Math.max(0,de.scrollHeight-innerHeight)}
+  function tick(now){
+    var dt=Math.min(50,now-prev)/16.7;prev=now;
+    var d=target-cur;
+    if(Math.abs(d)<.3){cur=target;window.scrollTo({top:cur,behavior:"instant"});raf=0;return}
+    cur+=d*(1-Math.pow(1-.11,dt));
+    window.scrollTo({top:cur,behavior:"instant"});
+    raf=requestAnimationFrame(tick);
+  }
+  function inner(el){
+    while(el&&el!==document.body&&el!==de){
+      var o=getComputedStyle(el).overflowY;
+      if((o==="auto"||o==="scroll")&&el.scrollHeight>el.clientHeight+1)return true;
+      el=el.parentElement;
+    }
+    return false;
+  }
+  addEventListener("wheel",function(e){
+    if(e.ctrlKey||e.metaKey||e.defaultPrevented||e.deltaX&&Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
+    if(inner(e.target))return;
+    var dy=e.deltaY*(e.deltaMode===1?34:e.deltaMode===2?innerHeight:1);
+    if(e.deltaMode===0&&Math.abs(dy)<40){ /* trackpad: leave it native */
+      if(raf){cancelAnimationFrame(raf);raf=0}return;
+    }
+    e.preventDefault();
+    if(!raf){cur=window.scrollY;target=cur;prev=performance.now()}
+    target=Math.max(0,Math.min(maxY(),target+dy));
+    if(!raf)raf=requestAnimationFrame(tick);
+  },{passive:false});
+  addEventListener("scroll",function(){if(!raf){cur=target=window.scrollY}},{passive:true});
+})();
+
+/* reveal */
+var secs=document.querySelectorAll("section");
+if("IntersectionObserver" in window){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{threshold:0,rootMargin:"0px 0px 15% 0px"});
+  secs.forEach(function(s){io.observe(s)});
+}else secs.forEach(function(s){s.classList.add("in")});
+})();
+</script>
+</body>
+</html>
